@@ -46,11 +46,12 @@ int max_elem(float * vec, size_t size) {
 }
 
 int max_elem_manual(float * vec, size_t size) {
-    float maxVal = vec[0]; // Ignore empty vec
+    float maxVal = vec[0]; // Ignore empty vec case
     int max_idx = 0;
     for (size_t i = 0; i < size; i++) {
-        if (maxVal > vec[i]) {
+        if (maxVal < vec[i]) {
             max_idx = i;
+            maxVal = vec[i];
         }
     }
     return max_idx;
@@ -62,7 +63,7 @@ int max_elem_avx512(float * vec, size_t size) {
     div_t setup = div(size, 32);
     int overhang = setup.rem;
     int seq = setup.quot;
-    for (size_t i = 0; i < seq; i+=32) {
+    for (int i = 0; i < seq*32; i+=32) {
         __m512 first = _mm512_load_ps(&vec[i]);
         __m512 second = _mm512_load_ps(&vec[i+16]);
         __m512 maxd = _mm512_max_ps(first, second);
@@ -79,17 +80,57 @@ int max_elem_avx512(float * vec, size_t size) {
                 // Extract the non-zero bit of the mask.
             }*/
             for (int j = 0; j<32; j++) {
-                if (vec[j] == max_single) {
-                    maxVal = vec[j];
+                if (vec[i+j] == max_single) {
+                    maxVal = vec[i+j];
                     max_idx = i+j;
+                    break;
                 }
             }
         }
     }
 
-    for (int i = seq; i<size; i++) {
-        if (maxVal > vec[i]) {
+    for (int i = seq*32; i < seq*32 + overhang; i++) {
+        if (maxVal < vec[i]) {
             max_idx = i;
+            maxVal = vec[i];
+        }
+    }
+    return max_idx;
+}
+
+int max_elem_avx512_2(float * vec, size_t size) {
+    float maxVal = vec[0];
+    int max_idx = 0;
+    div_t setup = div(size, 16);
+    int overhang = setup.rem;
+    int seq = setup.quot;
+    for (int i = 0; i < seq*16; i+=16) {
+        float max_single = _mm512_reduce_max_ps(_mm512_load_ps(&vec[i]));
+        if (max_single > maxVal) {
+            /* @ todo INTRICATE IT
+            __mm512 maxvalVec = _mm512_set1_ps(maxVal);
+            __mmask16 comparison = _mm512_cmp_ps_mask(first, maxvalVec, 0);
+            int newidx = 0; //@TODO extract the non zero bit of the mask
+            if (comparison != 0) {
+                // EXTRACT the non zero bit of the mask
+            } else {
+                comparison = _mm512_cmp_ps_mask(first, maxvalVec, 0);
+                // Extract the non-zero bit of the mask.
+            }*/
+            for (int j = 0; j<16; j++) {
+                if (vec[i+j] == max_single) {
+                    maxVal = vec[i+j];
+                    max_idx = i+j;
+                    break;
+                }
+            }
+        }
+    }
+
+    for (int i = seq*16; i < seq*16 + overhang; i++) {
+        if (maxVal < vec[i]) {
+            max_idx = i;
+            maxVal = vec[i];
         }
     }
     return max_idx;
@@ -99,6 +140,7 @@ int main() {
     std::chrono::duration<double> elapsed_seconds(0);
     std::chrono::duration<double> elapsed_seconds_seq(0);
     std::chrono::duration<double> elapsed_seconds_avx512(0);
+    std::chrono::duration<double> elapsed_seconds_avx512_2(0);
     for (int i = 0; i < 1000000; i++) {
             size_t size = getSize();
         float *logits = (float *)aligned_alloc(1024, size*sizeof(float));
@@ -117,7 +159,14 @@ int main() {
         int mymax3 = max_elem_avx512(logits, size);
         auto end3 = std::chrono::steady_clock::now();
 
-        if (!allEqual(mymax, mymax2, mymax3)) {
+        // avx512, second attempt
+        auto start4 = std::chrono::steady_clock::now();
+        int mymax4 = max_elem_avx512_2(logits, size);
+        auto end4 = std::chrono::steady_clock::now();
+
+        if (!allEqual(mymax, mymax2, mymax3, mymax4)) {
+            std::cerr << "Mymax1: " << logits[mymax] << " MyMax2 " << logits[mymax2]  << 
+            " MyMax3 " << logits[mymax3] << " size: " << size << std::endl;
             break;
         }
 
@@ -126,11 +175,13 @@ int main() {
         elapsed_seconds += end-start;
         elapsed_seconds_seq += end2-start2;
         elapsed_seconds_avx512 += end3-start3;
+        elapsed_seconds_avx512_2 += end4-start4;
         free(logits);
     }
     std::cout << "Elapsed time:\n"
     << "std::max_element: "<< elapsed_seconds.count() << "s\n"
     << "max_element_avx512: "<< elapsed_seconds_avx512.count() << "s\n"
+    << "max_element_avx512_2: "<< elapsed_seconds_avx512_2.count() << "s\n"
     << "simple_seq: " << elapsed_seconds_seq.count() << "s" << std::endl;
     return 0;
 }
