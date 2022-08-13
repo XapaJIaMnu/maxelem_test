@@ -9,7 +9,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type is: ${CMAKE_BUILD_TYPE}")
 
-set(CMAKE_CXX_FLAGS "-march=icelake-server -Wall -Wextra -g -funroll-loops")
+set(CMAKE_CXX_FLAGS "-march=native -Wall -Wextra -g -funroll-loops")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 set(CMAKE_CXX_FLAGS_DEBUG "-Og")
 add_executable(test.out src/test.cpp)
