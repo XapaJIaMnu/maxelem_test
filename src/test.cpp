@@ -310,12 +310,18 @@ int main() {
     srand (time(NULL));
     std::chrono::duration<double> elapsed_seconds(0);
     std::chrono::duration<double> elapsed_seconds_seq(0);
+#ifdef __AVX512F__
     std::chrono::duration<double> elapsed_seconds_avx512(0);
     std::chrono::duration<double> elapsed_seconds_avx512_2(0);
     std::chrono::duration<double> elapsed_seconds_avx512_3(0);
     std::chrono::duration<double> elapsed_seconds_avx512_4(0);
+#endif
+#ifdef __AVX__
     std::chrono::duration<double> elapsed_seconds_avx_3(0);
+#endif
+#ifdef __SSE__
     std::chrono::duration<double> elapsed_seconds_sse_3(0);
+#endif
     for (int i = 0; i < ITERATIONS; i++) {
         size_t size = getSize();
         float *logits = (float *)aligned_alloc(1024, size*sizeof(float));
