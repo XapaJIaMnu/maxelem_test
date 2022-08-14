@@ -374,8 +374,8 @@ int main() {
         auto end7 = std::chrono::steady_clock::now();
 
         // Check for correctness
-        if (!allEqual(mymax, mymax7)) {
-            std::cerr << "Mymax1: " << logits[mymax] << " MyMaxAVX " << logits[mymax7]  <<  " size: " << size << std::endl;
+        if (!allEqual(mymax, mymax2, mymax7)) {
+            std::cerr << "Mymax1: " << logits[mymax] << "Mymax2: " << logits[mymax2] << " MyMaxAVX " << logits[mymax7]  <<  " size: " << size << std::endl;
             break;
         }
         elapsed_seconds_avx_3 += end7-start7;
@@ -388,7 +388,7 @@ int main() {
 
         // Check for correctness
         if (!allEqual(mymax, mymax8)) {
-            std::cerr << "Mymax1: " << logits[mymax] << " MyMaxSSE " << logits[mymax8]  <<  " size: " << size << std::endl;
+            std::cerr << "Mymax1: " << logits[mymax] << "Mymax2: " << logits[mymax2] <<  " MyMaxSSE " << logits[mymax8]  <<  " size: " << size << std::endl;
             break;
         }
         elapsed_seconds_sse_3 += end8-start8;
@@ -398,8 +398,8 @@ int main() {
     std::cout << "Elapsed time. Baselines: \n"
     << "std::max_element:        "<< elapsed_seconds.count() << "s\n"
     << "simple_seq:              " << elapsed_seconds_seq.count() << "s\n"
-    << "AVX512F:\n"
 #ifdef __AVX512F__
+    << "AVX512F:\n"
     << "max + max_reduce:        "<< elapsed_seconds_avx512.count() << "s\n"
     << "max_reduce only:         "<< elapsed_seconds_avx512_2.count() << "s\n"
     << "cmp_ps_mask only:        "<< elapsed_seconds_avx512_3.count() << "s\n"
