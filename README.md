@@ -44,4 +44,4 @@ Tested on different hardware with different compilers. 100000 iterations of floa
 
 ## Future work
 - Inspect assembly to find out why vectorised overhang is slower.
-- Ispect assembly to find out why AVX is faster with ICC/GCC.
+- Inspect assembly to find out why AVX is faster with ICC/GCC.
