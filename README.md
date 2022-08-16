@@ -12,7 +12,7 @@ make
 
 ## Tests
 Tested on different hardware with different compilers. 100000 iterations of float array. The float array is of size randomly generated up to 2000 elements, and the floats inside are drawn from the uniform distribution \[5:5\].
-### Cooper lake results
+### Cascade lake results
 
 |                                | GCC 11.2 | clang 14 | icc 2022.1.0 |
 |--------------------------------|----------|----------|--------------|
